@@ -1,0 +1,118 @@
+%%{init: {
+  "theme": "dark",
+  "themeVariables": {
+    "primaryColor": "#1E3A5F",
+    "primaryTextColor": "#E8F4FD",
+    "primaryBorderColor": "#2E86AB",
+    "lineColor": "#FF6B35",
+    "secondaryColor": "#0D2137",
+    "tertiaryColor": "#152535",
+    "background": "#0A1929",
+    "mainBkg": "#0D2137",
+    "nodeBorder": "#2E86AB",
+    "clusterBkg": "#0D2137",
+    "clusterBorder": "#2E86AB",
+    "titleColor": "#E8F4FD",
+    "edgeLabelBackground": "#0A1929",
+    "fontFamily": "Segoe UI, Arial, sans-serif"
+  }
+}}%%
+flowchart LR
+    %% ── SOURCES ────────────────────────────────────────────────────
+    subgraph SRC ["  DATA SOURCES  "]
+        direction TB
+        SAP["🏭 SAP HANA\nPM · PP · FI/CO"]
+        SCADA["📡 SCADA / PI Historian\nStreaming"]
+        SAP_FMT(["CSV / JSON"])
+        SCADA_FMT(["Streaming JSON"])
+        SAP --> SAP_FMT
+        SCADA --> SCADA_FMT
+    end
+
+    %% ── DATABRICKS LAKEHOUSE ────────────────────────────────────────
+    subgraph UC ["  UNITY CATALOG — Databricks Lakehouse Platform  "]
+        direction TB
+
+        subgraph LAND ["  Landing Zone (Volumes)  "]
+            direction TB
+            V1[("pocos_csv")]
+            V2[("producao_csv")]
+            V3[("ordens_json")]
+            V4[("producao_streaming")]
+        end
+
+        AL["⚙️ Auto Loader\n+ Structured Streaming"]
+
+        subgraph BRONZE ["  Bronze Layer — Raw Ingestion  "]
+            direction TB
+            B1["bronze_pocos"]
+            B2["bronze_producao"]
+            B3["bronze_ordens"]
+        end
+
+        DQ["✅ Delta Live Tables\nDQ Expectations"]
+
+        subgraph SILVER ["  Silver Layer — Curated  "]
+            direction TB
+            S1["silver_pocos"]
+            S2["silver_producao"]
+            S3["silver_ordens"]
+        end
+
+        AGG["📊 Aggregations\n& Business Logic"]
+
+        subgraph GOLD ["  Gold Layer — Analytics-Ready  "]
+            direction TB
+            G1["gold_producao\npor_campo"]
+            G2["gold_custos\nmanutencao"]
+            G3["gold_eficiencia\noperacional"]
+        end
+    end
+
+    %% ── CONSUMPTION ─────────────────────────────────────────────────
+    subgraph CONS ["  CONSUMPTION  "]
+        direction TB
+        DASH["📈 AI/BI Dashboard"]
+        GENIE["💬 Genie\nNLP Q&A"]
+        ML["🤖 MLflow\nRandomForest\n→ Model Serving"]
+        APP["🛢️ Databricks App\nO&G Operations Hub"]
+    end
+
+    %% ── EDGES ────────────────────────────────────────────────────────
+    SAP_FMT  -->|"batch load"| V1
+    SAP_FMT  -->|"batch load"| V2
+    SAP_FMT  -->|"batch load"| V3
+    SCADA_FMT -->|"real-time"| V4
+
+    LAND --> AL
+    AL   --> BRONZE
+
+    BRONZE --> DQ
+    DQ     --> SILVER
+
+    SILVER --> AGG
+    AGG    --> GOLD
+
+    GOLD --> DASH
+    GOLD --> GENIE
+    GOLD --> ML
+    GOLD --> APP
+
+    %% ── STYLES ──────────────────────────────────────────────────────
+    classDef source    fill:#1B3A52,stroke:#2E86AB,color:#E8F4FD,rx:8
+    classDef fmt       fill:#0F2A3D,stroke:#FF6B35,color:#FF6B35,rx:12
+    classDef volume    fill:#122840,stroke:#2E86AB,color:#90CAF9
+    classDef process   fill:#FF6B35,stroke:#E55A2B,color:#0A1929,font-weight:bold
+    classDef bronze    fill:#3D2B1F,stroke:#CD7F32,color:#FFCC99
+    classDef silver    fill:#1A2A3A,stroke:#A8B8C8,color:#C8D8E8
+    classDef gold      fill:#2A2000,stroke:#FFD700,color:#FFD700
+    classDef consume   fill:#1E3A5F,stroke:#42A5F5,color:#E8F4FD,rx:8
+
+    class SAP,SCADA source
+    class SAP_FMT,SCADA_FMT fmt
+    class V1,V2,V3,V4 volume
+    class AL,DQ,AGG process
+    class B1,B2,B3 bronze
+    class S1,S2,S3 silver
+    class G1,G2,G3 gold
+    class DASH,GENIE,ML,APP consume

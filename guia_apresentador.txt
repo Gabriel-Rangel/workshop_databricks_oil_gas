@@ -1,0 +1,250 @@
+================================================================================
+  GUIA DO APRESENTADOR - Workshop Databricks
+  Jargoes da industria, decisoes tecnicas e pontos de discussao
+================================================================================
+
+--------------------------------------------------------------------------------
+1. JARGOES DA INDUSTRIA DE OIL & GAS
+--------------------------------------------------------------------------------
+
+BSW (Basic Sediment & Water)
+  Percentual de agua e sedimentos no oleo produzido.
+  Ex: BSW de 80% = apenas 20% do fluido e oleo de fato.
+  BSW alto indica que o poco esta "aguando" — sinal de depletacao do reservatorio.
+  A operadora monitora de perto porque opera campos maduros onde o BSW tende a subir.
+
+bbl (barrel / barril)
+  Unidade padrao de volume de petroleo. 1 bbl = 159 litros (~42 galoes US).
+  Producao e reportada em bbl/dia (barris por dia).
+  Ex: "8.000 bbl/dia" = o poco produz 8.000 barris de oleo por dia.
+
+boe (barrel of oil equivalent / barril de oleo equivalente)
+  Unidade que converte gas natural em equivalente de oleo para comparacao.
+  Usado para reportar producao total (oleo + gas) em uma unica metrica.
+
+Mm3 (milhares de metros cubicos)
+  Unidade de volume de gas natural. Producao de gas e medida em Mm3/dia.
+
+FPSO (Floating Production Storage and Offloading)
+  Plataforma flutuante que processa e armazena petroleo no mar.
+  A operadora opera FPSOs nos campos de Frade e Tubarao Martelo.
+
+BCS (Bomba Centrifuga Submersa)
+  Metodo de elevacao artificial. Uma bomba eletrica submersa no poco
+  empurra o oleo para a superficie. Comum em pocos com pressao insuficiente.
+
+Gas Lift
+  Metodo de elevacao onde gas e injetado no poco para reduzir a densidade
+  do fluido e ajudar o oleo a subir. Alternativa ao BCS.
+
+Arvore de Natal Molhada (Wet Christmas Tree)
+  Conjunto de valvulas instalado no fundo do mar, sobre a cabeca do poco.
+  Controla o fluxo de oleo e gas. Nome vem do formato que lembra uma arvore.
+
+Riser Flexivel
+  Tubulacao flexivel que conecta o poco no fundo do mar a plataforma na superficie.
+
+Umbilical
+  Cabo que leva energia eletrica, sinais de controle e fluidos quimicos
+  da plataforma ate os equipamentos submarinos.
+
+Manifold
+  Estrutura submarina que conecta varios pocos a um unico ponto de coleta,
+  antes de enviar para a plataforma.
+
+DHSV (Downhole Safety Valve)
+  Valvula de seguranca instalada dentro do poco. Fecha automaticamente
+  em caso de emergencia para evitar vazamento descontrolado (blowout).
+
+Workover
+  Intervencao em um poco existente para restaurar ou aumentar a producao.
+  Ex: trocar a BCS, limpar o poco, estimular o reservatorio.
+  A operadora faz workovers para revitalizar campos maduros.
+
+ANP (Agencia Nacional do Petroleo)
+  Regulador brasileiro de petroleo e gas. A operadora reporta producao,
+  royalties e dados de seguranca para a ANP.
+
+CDC (Change Data Capture)
+  Tecnica de captura incremental de mudancas em bancos de dados.
+  Relevante para a ingestao de dados do SAP HANA sem impactar performance.
+
+EOR (Enhanced Oil Recovery / Recuperacao Avancada de Petroleo)
+  Conjunto de tecnicas para extrair mais oleo de um reservatorio que ja passou
+  da fase de producao primaria (pressao natural) e secundaria (injecao de agua).
+  Exemplos:
+    - Injecao de agua: forca o oleo para fora dos poros da rocha. E o mais comum.
+    - Injecao de gas (CO2 ou gas natural): reduz a viscosidade do oleo.
+    - Injecao de quimicos (polimeros, surfactantes): altera as propriedades do fluido.
+    - Injecao de vapor: usado em oleos pesados para aquece-los e facilitar o fluxo.
+  Relevancia para a operadora: campos maduros como Frade e Polvo dependem de EOR
+  para manter a producao. Com dados em tempo real (pressao, temperatura, BSW),
+  modelos de ML podem otimizar os parametros de injecao e maximizar a recuperacao.
+  Sem EOR, um campo maduro recupera ~30% do oleo. Com EOR otimizado, pode chegar a 50-60%.
+
+Digital Twin (Gemeo Digital)
+  Representacao virtual de um ativo fisico (poco, reservatorio, plataforma FPSO)
+  que e alimentada com dados em tempo real dos sensores.
+  Como funciona:
+    - Sensores no poco (pressao, temperatura, vazao) enviam dados para o Lakehouse
+    - Um modelo matematico/ML simula o comportamento do ativo
+    - O digital twin compara o comportamento real vs simulado
+    - Desvios indicam problemas antes que eles acontecam (manutencao preditiva)
+  Exemplos de uso:
+    - Digital twin de reservatorio: simula o fluxo de oleo no subsolo para
+      otimizar a posicao de novos pocos e parametros de injecao (EOR)
+    - Digital twin de FPSO: monitora turbocompressores, separadores e bombas
+      para prever falhas e agendar manutencao
+    - Digital twin de poco: acompanha a curva de declinio em tempo real
+      e ajusta previsoes automaticamente
+  Relevancia para o workshop: o pipeline de streaming (Lab 01) que construimos
+  e a base para alimentar um digital twin. Os dados de sensores (pressao, BSW,
+  temperatura) que ingerimos via SCADA sao exatamente o que alimenta o gemeo digital.
+  O modelo de ML (Lab 02) e uma forma simplificada de digital twin do poco.
+
+Declinio de producao
+  Fenomeno natural onde a producao de um poco diminui ao longo do tempo
+  conforme a pressao do reservatorio cai. A velocidade de declinio e um
+  dos principais indicadores para planejamento de investimentos.
+
+Curva de declinio
+  Grafico que mostra a queda de producao ao longo do tempo.
+  Usada para projetar producao futura e calcular reservas remanescentes.
+
+Bacia de Campos / Bacia de Santos
+  As duas principais bacias sedimentares de petroleo offshore do Brasil.
+  Campos: campos maduros (Frade, Albacora Leste, Marlim, Roncador).
+  Santos: campos mais novos e profundos (Wahoo, Buzios - pre-sal).
+
+--------------------------------------------------------------------------------
+2. POR QUE RANDOM FOREST?
+--------------------------------------------------------------------------------
+
+Random Forest e um algoritmo de ensemble que combina centenas de arvores de
+decisao, cada uma treinada em uma amostra aleatoria dos dados.
+
+Por que escolhemos para este workshop:
+
+  - Robusto a outliers: dados de producao de O&G tem outliers frequentes
+    (medicoes erradas, paradas de poco, testes). RF lida bem com isso.
+
+  - Nao exige normalizacao: diferente de regressao linear ou SVM, RF
+    funciona com features em escalas diferentes (bbl, psi, celsius, %).
+
+  - Interpretavel: voce pode extrair feature importance para explicar
+    ao engenheiro de producao quais variaveis mais influenciam a previsao.
+
+  - Rapido de treinar: para um workshop de 2h, precisamos de algo que
+    treine em segundos, nao minutos.
+
+  - Bom baseline: RF geralmente da resultados decentes sem muito tuning,
+    ideal para um primeiro modelo antes de partir para algo mais complexo
+    (XGBoost, LightGBM, redes neurais).
+
+Alternativas que poderiam ser discutidas:
+  - XGBoost/LightGBM: melhor performance, mais complexo de tunar
+  - Prophet/ARIMA: modelos de series temporais (mais adequado para previsao
+    de declinio, mas mais complexo de explicar no workshop)
+  - Redes neurais (LSTM): para series temporais longas com padrao complexo
+
+--------------------------------------------------------------------------------
+3. POR QUE O CHALLENGER PODE SER MELHOR (OU NAO)?
+--------------------------------------------------------------------------------
+
+Champion (v1):  RandomForest(n_estimators=100, random_state=42)
+Challenger (v2): RandomForest(n_estimators=200, max_depth=10, random_state=42)
+
+Diferencas:
+
+  n_estimators (100 vs 200):
+    Mais arvores = previsoes mais estaveis (menos variancia).
+    A media de 200 arvores tende a ser mais suave que a de 100.
+    Porem: mais arvores = mais tempo de treinamento (linear).
+
+  max_depth (None vs 10):
+    None = cada arvore cresce ate ficar "pura" (pode decorar os dados).
+    10 = limita a profundidade, forcando generalizacao.
+
+    Se os dados tem muitos outliers e ruido (comum em O&G):
+      - max_depth=10 pode MELHORAR porque evita overfitting
+      - O modelo generaliza melhor para dados novos
+
+    Se os dados tem padroes complexos reais:
+      - max_depth=10 pode PIORAR porque limita a capacidade do modelo
+      - Perde nuances importantes
+
+  Na pratica do workshop:
+    - Com dados sinteticos (ruido aleatorio), o challenger com max_depth=10
+      tende a ser MELHOR porque evita decorar o ruido.
+    - Mas isso nao e garantido — depende do seed e da distribuicao dos dados.
+    - O ponto importante nao e qual ganha, mas sim demonstrar o PROCESSO
+      de comparacao e promocao.
+
+  Ponto de discussao com o cliente:
+    "Na operadora, voces precisariam testar varios modelos e hiperparametros
+    de forma sistematica. O MLflow permite rastrear todos os experimentos
+    e comparar automaticamente. Em producao, isso seria automatizado com
+    Databricks Jobs rodando hyperparameter tuning (Hyperopt ou Optuna)."
+
+--------------------------------------------------------------------------------
+4. PONTOS DE DISCUSSAO DURANTE O WORKSHOP
+--------------------------------------------------------------------------------
+
+Sobre SAP HANA e Lakeflow Connect:
+  "Neste workshop simulamos a ingestao via arquivos CSV/JSON. Em producao,
+  a operadora usaria o Lakeflow Connect para fazer CDC direto do SAP HANA,
+  capturando mudancas em tempo real sem impactar a performance do ERP."
+
+Sobre streaming e SCADA:
+  "O gerador de streaming simula dados do PI Historian / SCADA. Em producao,
+  esses dados viriam via Kafka, Event Hubs ou IoT Hub, e o Auto Loader
+  processaria incrementalmente da mesma forma que demonstramos."
+
+Sobre Data Quality e Expectations:
+  "As Expectations do DLT funcionam como um contrato de qualidade.
+  Em producao, voces podem configurar alertas quando o percentual
+  de violacoes ultrapassa um threshold — ex: se mais de 5% dos registros
+  de BSW estao fora da faixa, disparar alerta para o engenheiro."
+
+Sobre governanca (Unity Catalog):
+  "Todos os dados, modelos e experimentos estao governados no Unity Catalog.
+  Isso significa que voces podem controlar quem ve o que, rastrear lineage
+  de ponta a ponta, e atender requisitos da ANP e auditoria."
+
+Sobre modelo de ML em producao:
+  "O modelo de declinio de producao que treinamos poderia ser servido
+  via Model Serving como uma API REST, ou executado em batch diariamente
+  via Databricks Jobs para atualizar projecoes automaticamente."
+
+Sobre proximos passos reais para a operadora:
+  - POC com dados reais do SAP HANA via Lakeflow Connect
+  - Integracao com PI Historian / SCADA para streaming real
+  - Modelos mais sofisticados (XGBoost, series temporais)
+  - Dashboards AI/BI conectados aos dados Gold para diretoria
+  - Governanca LGPD + requisitos ANP com Unity Catalog
+  - Databricks Apps para engenheiros de producao em campo
+
+--------------------------------------------------------------------------------
+5. METRICAS DE ML EXPLICADAS
+--------------------------------------------------------------------------------
+
+MAE (Mean Absolute Error):
+  Media do erro absoluto. "Em media, erramos X barris por semana."
+  Facil de explicar para o negocio.
+
+RMSE (Root Mean Squared Error):
+  Raiz da media do erro quadrado. Penaliza mais erros grandes.
+  Se RMSE >> MAE, significa que tem alguns erros muito grandes (outliers).
+
+R2 (R-squared / Coeficiente de Determinacao):
+  Quanto da variacao dos dados o modelo explica.
+  R2 = 0.85 significa que o modelo explica 85% da variacao.
+  R2 = 1.0 seria perfeito. R2 < 0 significa que o modelo e pior que a media.
+
+  Para o cliente: "Nosso modelo explica X% da variacao na producao semanal.
+  Os outros Y% sao influenciados por fatores que nao estao nos dados,
+  como intervencoes no poco, clima, decisoes operacionais, etc."
+
+================================================================================
+  FIM DO GUIA
+================================================================================

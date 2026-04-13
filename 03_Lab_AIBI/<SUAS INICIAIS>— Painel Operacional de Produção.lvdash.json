@@ -1,0 +1,1216 @@
+{
+  "datasets": [
+    {
+      "name": "gold_custos",
+      "displayName": "Custos de Manutenção",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workshop_prio.gabriel_rangel.gold_custos_manutencao"
+      ],
+      "columns": [
+        {
+          "displayName": "Variância Custo (%)",
+          "description": "Percentage difference between real and estimated cost",
+          "expression": "(SUM(`custo_real_total`) - SUM(`custo_estimado_total`)) / SUM(`custo_estimado_total`) * 100"
+        }
+      ]
+    },
+    {
+      "name": "gold_producao",
+      "displayName": "Produção por Campo",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workshop_prio.gabriel_rangel.gold_producao_por_campo"
+      ]
+    },
+    {
+      "name": "pocos_mapa",
+      "displayName": "Mapa de Poços",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workshop_prio.gabriel_rangel.bronze_pocos\n",
+        "WHERE\n",
+        "  latitude IS NOT NULL\n",
+        "  AND longitude IS NOT NULL"
+      ]
+    },
+    {
+      "name": "gold_eficiencia",
+      "displayName": "Eficiência Operacional",
+      "queryLines": [
+        "SELECT\n",
+        "  e.*,\n",
+        "  p.bacia\n",
+        "FROM\n",
+        "  workshop_prio.gabriel_rangel.gold_eficiencia_operacional e\n",
+        "    JOIN workshop_prio.gabriel_rangel.gold_producao_por_campo p\n",
+        "      ON e.campo = p.campo"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "209fc2de",
+      "displayName": "Visão Executiva",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## ⛽ Oil&Gas — Painel Operacional de Produção"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 9,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_producao",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_producao",
+                  "fields": [
+                    {
+                      "name": "sum(producao_total_bbl)",
+                      "expression": "SUM(`producao_total_bbl`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Produção Total (BBL)",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(producao_total_bbl)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Produção Total"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_pocos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_producao",
+                  "fields": [
+                    {
+                      "name": "sum(pocos_ativos)",
+                      "expression": "SUM(`pocos_ativos`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Poços Ativos",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(pocos_ativos)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Poços Ativos"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_bsw",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_producao",
+                  "fields": [
+                    {
+                      "name": "avg(bsw_medio_pct)",
+                      "expression": "AVG(`bsw_medio_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "BSW Médio (%)",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(bsw_medio_pct)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "BSW Médio"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_custo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_eficiencia",
+                  "fields": [
+                    {
+                      "name": "sum(custo_manutencao_total)",
+                      "expression": "SUM(`custo_manutencao_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Custo Manutenção Total",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(custo_manutencao_total)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "BRL",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Custo Total"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_producao_campo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_producao",
+                  "fields": [
+                    {
+                      "name": "bacia",
+                      "expression": "`bacia`"
+                    },
+                    {
+                      "name": "campo",
+                      "expression": "`campo`"
+                    },
+                    {
+                      "name": "sum(producao_total_bbl)",
+                      "expression": "SUM(`producao_total_bbl`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Produção Total por Campo (BBL)",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "campo",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Campo",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(producao_total_bbl)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Produção (BBL)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "bacia",
+                  "legend": {
+                    "position": "bottom"
+                  },
+                  "displayName": "Bacia",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "mapa_pocos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pocos_mapa",
+                  "fields": [
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    },
+                    {
+                      "name": "latitude",
+                      "expression": "`latitude`"
+                    },
+                    {
+                      "name": "longitude",
+                      "expression": "`longitude`"
+                    },
+                    {
+                      "name": "nome_poco",
+                      "expression": "`nome_poco`"
+                    },
+                    {
+                      "name": "campo",
+                      "expression": "`campo`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Localização dos Poços",
+                "showTitle": true
+              },
+              "widgetType": "symbol-map",
+              "encodings": {
+                "coordinates": {
+                  "latitude": {
+                    "fieldName": "latitude",
+                    "displayName": "Latitude"
+                  },
+                  "longitude": {
+                    "fieldName": "longitude",
+                    "displayName": "Longitude"
+                  }
+                },
+                "color": {
+                  "fieldName": "status",
+                  "displayName": "Status",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "nome_poco",
+                    "displayName": "Nome do Poço"
+                  },
+                  {
+                    "fieldName": "campo",
+                    "displayName": "Campo"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 4,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "tabela_eficiencia",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_eficiencia",
+                  "fields": [
+                    {
+                      "name": "campo",
+                      "expression": "`campo`"
+                    },
+                    {
+                      "name": "total_pocos",
+                      "expression": "`total_pocos`"
+                    },
+                    {
+                      "name": "producao_total_bbl",
+                      "expression": "`producao_total_bbl`"
+                    },
+                    {
+                      "name": "uptime_medio_horas",
+                      "expression": "`uptime_medio_horas`"
+                    },
+                    {
+                      "name": "bsw_medio_pct",
+                      "expression": "`bsw_medio_pct`"
+                    },
+                    {
+                      "name": "producao_media_por_poco",
+                      "expression": "`producao_media_por_poco`"
+                    },
+                    {
+                      "name": "total_ordens_manutencao",
+                      "expression": "`total_ordens_manutencao`"
+                    },
+                    {
+                      "name": "custo_manutencao_total",
+                      "expression": "`custo_manutencao_total`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Eficiência Operacional por Campo",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "campo",
+                    "displayName": "Campo"
+                  },
+                  {
+                    "fieldName": "total_pocos",
+                    "displayName": "Total Poços"
+                  },
+                  {
+                    "fieldName": "producao_total_bbl",
+                    "displayName": "Produção Total (BBL)"
+                  },
+                  {
+                    "fieldName": "uptime_medio_horas",
+                    "displayName": "Uptime Médio (h)"
+                  },
+                  {
+                    "fieldName": "bsw_medio_pct",
+                    "displayName": "BSW Médio (%)",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "50"
+                            },
+                            "operator": ">"
+                          },
+                          "backgroundColor": "#FDEDEC",
+                          "foregroundColor": "#C0392B"
+                        },
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "50"
+                            },
+                            "operator": "<="
+                          },
+                          "backgroundColor": "#EAFAF1",
+                          "foregroundColor": "#0E6655"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "fieldName": "producao_media_por_poco",
+                    "displayName": "Produção Média/Poço"
+                  },
+                  {
+                    "fieldName": "total_ordens_manutencao",
+                    "displayName": "Ordens de Manutenção"
+                  },
+                  {
+                    "fieldName": "custo_manutencao_total",
+                    "displayName": "Custo Manutenção (R$)"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_bacia",
+            "queries": [
+              {
+                "name": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3eb611a66809d1fbaff63d6a4_bacia",
+                "query": {
+                  "datasetName": "gold_producao",
+                  "fields": [
+                    {
+                      "name": "bacia",
+                      "expression": "`bacia`"
+                    },
+                    {
+                      "name": "bacia_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3ee971f8e9571c83f29557a44_bacia",
+                "query": {
+                  "datasetName": "gold_eficiencia",
+                  "fields": [
+                    {
+                      "name": "bacia",
+                      "expression": "`bacia`"
+                    },
+                    {
+                      "name": "bacia_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3edaf1b929fa0a09ff79f990d_bacia",
+                "query": {
+                  "datasetName": "pocos_mapa",
+                  "fields": [
+                    {
+                      "name": "bacia",
+                      "expression": "`bacia`"
+                    },
+                    {
+                      "name": "bacia_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Bacia",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "bacia",
+                    "queryName": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3eb611a66809d1fbaff63d6a4_bacia"
+                  },
+                  {
+                    "fieldName": "bacia",
+                    "queryName": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3ee971f8e9571c83f29557a44_bacia"
+                  },
+                  {
+                    "fieldName": "bacia",
+                    "queryName": "dashboards/01f134e33c691bb8a6dbc3b8f497639c/datasets/01f134e3edaf1b929fa0a09ff79f990d_bacia"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "manutencao",
+      "displayName": "Manutenção & Custos",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## 🔧 Manutenção & Custos — Análise de Despesas Operacionais"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_ordens",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "sum(total_ordens)",
+                      "expression": "SUM(`total_ordens`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total de Ordens",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(total_ordens)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Ordens"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_custo_real",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "sum(custo_real_total)",
+                      "expression": "SUM(`custo_real_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Custo Real Total",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(custo_real_total)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "BRL",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Custo Real"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_variancia",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "measure(Variância Custo (%))",
+                      "expression": "MEASURE(`Variância Custo (%)`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Variância Média de Custo",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Variância Custo (%))",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">"
+                        },
+                        "color": "#E74C3C"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<="
+                        },
+                        "color": "#0E6655"
+                      }
+                    ]
+                  },
+                  "displayName": "Variância (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_pocos_afetados",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "sum(pocos_afetados)",
+                      "expression": "SUM(`pocos_afetados`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Poços Afetados",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(pocos_afetados)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Poços"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 1,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_custo_tipo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "tipo_manutencao",
+                      "expression": "`tipo_manutencao`"
+                    },
+                    {
+                      "name": "sum(custo_real_total)",
+                      "expression": "SUM(`custo_real_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Custo Real por Tipo de Manutenção",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "tipo_manutencao",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Tipo de Manutenção",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(custo_real_total)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "BRL",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Custo Real Total (R$)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "tipo_manutencao",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Tipo de Manutenção",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_custo_equip",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "equipamento",
+                      "expression": "`equipamento`"
+                    },
+                    {
+                      "name": "sum(custo_real_total)",
+                      "expression": "SUM(`custo_real_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Custo Real por Equipamento",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "equipamento",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Equipamento",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(custo_real_total)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "BRL",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Custo Real (R$)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "equipamento",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Equipamento",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 4,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "tabela_custos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "gold_custos",
+                  "fields": [
+                    {
+                      "name": "tipo_manutencao",
+                      "expression": "`tipo_manutencao`"
+                    },
+                    {
+                      "name": "equipamento",
+                      "expression": "`equipamento`"
+                    },
+                    {
+                      "name": "total_ordens",
+                      "expression": "`total_ordens`"
+                    },
+                    {
+                      "name": "custo_estimado_total",
+                      "expression": "`custo_estimado_total`"
+                    },
+                    {
+                      "name": "custo_real_total",
+                      "expression": "`custo_real_total`"
+                    },
+                    {
+                      "name": "custo_real_medio",
+                      "expression": "`custo_real_medio`"
+                    },
+                    {
+                      "name": "pocos_afetados",
+                      "expression": "`pocos_afetados`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Detalhamento de Custos por Tipo e Equipamento",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "tipo_manutencao",
+                    "displayName": "Tipo de Manutenção"
+                  },
+                  {
+                    "fieldName": "equipamento",
+                    "displayName": "Equipamento"
+                  },
+                  {
+                    "fieldName": "total_ordens",
+                    "displayName": "Total Ordens"
+                  },
+                  {
+                    "fieldName": "custo_estimado_total",
+                    "displayName": "Custo Estimado (R$)"
+                  },
+                  {
+                    "fieldName": "custo_real_total",
+                    "displayName": "Custo Real (R$)",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "120000000"
+                            },
+                            "operator": ">"
+                          },
+                          "backgroundColor": "#FDEDEC",
+                          "foregroundColor": "#C0392B"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "fieldName": "custo_real_medio",
+                    "displayName": "Custo Médio Real (R$)"
+                  },
+                  {
+                    "fieldName": "pocos_afetados",
+                    "displayName": "Poços Afetados"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {
+        "light": "#F0F3F5",
+        "dark": "#0D1117"
+      },
+      "widgetBackgroundColor": {
+        "light": "#FFFFFF",
+        "dark": "#161B22"
+      },
+      "widgetBorderColor": {
+        "light": "#E1E5E9",
+        "dark": "#30363D"
+      },
+      "fontColor": {
+        "light": "#1B2631",
+        "dark": "#E6EDF3"
+      },
+      "selectionColor": {
+        "light": "#0E6655",
+        "dark": "#2EA57A"
+      },
+      "visualizationColors": [
+        "#0E6655",
+        "#F39C12",
+        "#2980B9",
+        "#E74C3C",
+        "#8E44AD",
+        "#1ABC9C",
+        "#D35400",
+        "#3498DB",
+        "#C0392B",
+        "#27AE60"
+      ],
+      "widgetHeaderAlignment": "LEFT",
+      "fontFamily": "Trebuchet MS"
+    },
+    "genieSpace": {
+      "isEnabled": true,
+      "overrideId": "01f134e7409a1099a5a7aa8f81116959",
+      "enablementMode": "ENABLED"
+    },
+    "applyModeEnabled": false
+  }
+}

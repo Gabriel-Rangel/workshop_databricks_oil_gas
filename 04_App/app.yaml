@@ -1,0 +1,19 @@
+command:
+  - "python"
+  - "app.py"
+
+env:
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+
+  - name: SERVING_ENDPOINT_NAME
+    valueFrom: serving-endpoint
+
+  - name: GENIE_SPACE_ID
+    valueFrom: genie-space
+
+  - name: SCHEMA
+    value: "gabriel_rangel"
+
+  - name: DASHBOARD_EMBED_URL
+    value: ""
