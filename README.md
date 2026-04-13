@@ -13,21 +13,6 @@
   Workshop pratico de <strong>Data Engineering, Machine Learning e Analytics</strong> aplicados ao setor de <strong>Petroleo & Gas</strong>, utilizando a plataforma Databricks.
 </p>
 
----
-
-## 👥 Apresentador
-
-<table align="center">
-  <tr>
-    <td align="center" width="300">
-      <strong>Gabriel Rangel</strong><br>
-      <em>Solutions Architect</em><br>
-      <a href="https://www.linkedin.com/in/gabriel-rangel/">LinkedIn</a>
-    </td>
-  </tr>
-</table>
-
----
 
 ## 📋 Agenda
 
@@ -35,7 +20,6 @@
 |---|-----------|---------|-----------|
 | ⚙️ | **Setup Inicial** | 15 min | Configuracao do catalogo + geracao de dados sinteticos O&G |
 | 1️⃣ | **Lab 1 — Spark Declarative Pipelines** | 40 min | Auto Loader, Pipeline Medallion (Bronze/Silver/Gold), DQ, Streaming SCADA |
-| ☕ | **Coffee Break** | 15 min | — |
 | 2️⃣ | **Lab 2 — Machine Learning** | 35 min | Previsao de declinio, Champion/Challenger, MLflow, Inferencia batch |
 | 3️⃣ | **Lab 3 — AI/BI** | 25 min | Genie Space (linguagem natural) + Dashboard (importar JSON) |
 | 4️⃣ | **Lab 4 — Databricks App** | 20 min | Demo do O&G Operations Hub (Mapa, Dashboard, ML Serving, Genie Chat) |
@@ -182,17 +166,6 @@ workshop_databricks/
 | **ML** | scikit-learn, MLflow autolog, Model Registry (champion/challenger), Spark UDF |
 | **Analytics** | AI/BI Dashboards, Genie Spaces (NLP em portugues) |
 | **Apps** | Databricks Apps (Dash — mapa, dashboard embed, model serving, genie chat) |
-
----
-
-## 🏆 Desafio Pos-Workshop
-
-> Crie um projeto que impacta a operacao da empresa usando Databricks.
-> O melhor projeto **aprovado pelo coordenador para ir a producao** ganha uma **Databricks Bag** 🎒
->
-> **Prazo:** 30 dias apos o workshop
->
-> 📋 **Formulario:** [Enviar projeto](https://docs.google.com/forms/d/e/1FAIpQLSeSPSHRqpjaQN7hf3Z81fiE3cDUeoBcYjNKqIbISEyDbKoP1g/viewform)
 
 ---
 
