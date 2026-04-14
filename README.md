@@ -24,14 +24,15 @@
 | 3️⃣ | **Lab 3 — AI/BI** | 25 min | Genie Space (linguagem natural) + Dashboard (importar JSON) |
 | 4️⃣ | **Lab 4 — Databricks App** | 20 min | Demo do O&G Operations Hub (Mapa, Dashboard, ML Serving, Genie Chat) |
 | | **Total** | **~2h00** | |
-
 ---
 
 ## 🏗️ Arquitetura
 
+<!--
 <p align="center">
   <img src="images/arquitetura.png" alt="Arquitetura Medallion — Oil & Gas" width="90%">
 </p>
+-->
 
 O workshop segue a arquitetura **Medallion (Bronze → Silver → Gold)**, processando dados de operacoes de petroleo offshore desde a ingestao via SAP HANA e SCADA ate dashboards, ML e apps:
 
