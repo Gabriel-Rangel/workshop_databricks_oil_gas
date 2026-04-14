@@ -23,8 +23,7 @@
 | 2️⃣ | **Lab 2 — Machine Learning** | 35 min | Previsao de declinio, Champion/Challenger, MLflow, Inferencia batch |
 | 3️⃣ | **Lab 3 — AI/BI** | 25 min | Genie Space (linguagem natural) + Dashboard (importar JSON) |
 | 4️⃣ | **Lab 4 — Databricks App** | 20 min | Demo do O&G Operations Hub (Mapa, Dashboard, ML Serving, Genie Chat) |
-| 🏆 | **Encerramento + Desafio** | 10 min | Desafio Databricks Bag, proximos passos, Q&A |
-| | **Total** | **~2h40** | |
+| | **Total** | **~2h00** | |
 
 ---
 
