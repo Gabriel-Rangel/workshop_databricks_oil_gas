@@ -11,7 +11,6 @@
 # MAGIC
 # MAGIC | Aba | Funcionalidade | Recurso Databricks |
 # MAGIC |-----|---------------|--------------------|
-# MAGIC | Mapa Operacional | Mapa interativo de pocos com filtros | SQL Warehouse |
 # MAGIC | Dashboard Producao | Embed do dashboard AI/BI | Dashboard publicado |
 # MAGIC | Modelo Preditivo | Previsao de producao via formulario | Model Serving |
 # MAGIC | Genie Assistant | Chat com linguagem natural | Genie Space |
@@ -171,6 +170,14 @@ for f in app_files:
 
 # COMMAND ----------
 
+# Widget para capturar a URL de embed do dashboard AI/BI
+# Preencha o campo "Dashboard Embed URL" acima antes de continuar
+dbutils.widgets.text("dashboard_embed_url", "", "Dashboard Embed URL")
+DASHBOARD_EMBED_URL = dbutils.widgets.get("dashboard_embed_url")
+print(f"Dashboard URL configurado: {DASHBOARD_EMBED_URL[:60] if DASHBOARD_EMBED_URL else '(vazio - dashboard nao sera exibido)'}")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ### Alternativa: Deploy via CLI (avancado)
 # MAGIC
@@ -204,13 +211,12 @@ for f in app_files:
 # MAGIC
 # MAGIC | # | Teste | Resultado esperado |
 # MAGIC |---|-------|-------------------|
-# MAGIC | 1 | Abra a URL do app | Pagina carrega com tema escuro |
-# MAGIC | 2 | Aba "Mapa Operacional" | Mapa com ~2000 pocos, cores por status |
-# MAGIC | 3 | Filtre por campo "Frade" | Somente pocos de Frade aparecem |
-# MAGIC | 4 | Aba "Modelo Preditivo" | Formulario com campos preenchidos |
-# MAGIC | 5 | Clique "Prever Producao" | Gauge chart com valor em bbl |
-# MAGIC | 6 | Aba "Genie Assistant" | Chat funcional, pergunte "Qual campo teve a maior producao?" |
-# MAGIC | 7 | Verifique o SQL gerado | SQL valido aparece no painel lateral |
+# MAGIC | 1 | Abra a URL do app | Pagina carrega com tema escuro e header com gradiente |
+# MAGIC | 2 | Aba "Dashboard Producao" | Dashboard embed ou placeholder com instrucoes |
+# MAGIC | 3 | Aba "Modelo Preditivo" | Formulario com campos preenchidos |
+# MAGIC | 4 | Clique "Prever Producao" | Gauge chart com valor em bbl |
+# MAGIC | 5 | Aba "Genie Assistant" | Chat funcional, pergunte "Qual campo teve a maior producao?" |
+# MAGIC | 6 | Verifique o SQL gerado | SQL valido aparece no painel lateral |
 
 # COMMAND ----------
 

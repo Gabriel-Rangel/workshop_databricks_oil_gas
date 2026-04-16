@@ -1,0 +1,49 @@
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,212,255,0.5); }
+  50% { opacity: 0.9; box-shadow: 0 0 0 5px rgba(0,212,255,0); }
+}
+@keyframes pulse-purple {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+  50% { opacity: 0.9; box-shadow: 0 0 0 5px rgba(124,58,237,0); }
+}
+.badge-pulse { animation: pulse 2.5s infinite; }
+.badge-pulse-purple { animation: pulse-purple 2.5s infinite; }
+
+/* ── Dropdown dark theme ── */
+.Select-control {
+    background-color: #16213e !important;
+    border-color: rgba(0, 212, 255, 0.2) !important;
+}
+.Select-control:hover {
+    border-color: rgba(0, 212, 255, 0.5) !important;
+    box-shadow: none !important;
+}
+.Select-value-label,
+.Select-placeholder,
+.Select-input input {
+    color: #e6f1ff !important;
+}
+.Select-arrow {
+    border-top-color: #8892b0 !important;
+}
+.Select.is-open .Select-arrow {
+    border-bottom-color: #8892b0 !important;
+}
+.Select-menu-outer {
+    background-color: #16213e !important;
+    border-color: rgba(0, 212, 255, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+.Select-option {
+    background-color: #16213e !important;
+    color: #ccd6f6 !important;
+}
+.Select-option.is-focused {
+    background-color: rgba(0, 212, 255, 0.12) !important;
+    color: #00d4ff !important;
+}
+.Select-option.is-selected {
+    background-color: rgba(0, 212, 255, 0.18) !important;
+    color: #00d4ff !important;
+    font-weight: 600;
+}

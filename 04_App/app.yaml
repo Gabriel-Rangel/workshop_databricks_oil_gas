@@ -16,4 +16,4 @@ env:
     value: "gabriel_rangel"
 
   - name: DASHBOARD_EMBED_URL
-    value: ""
+    value: "https://adb-7405608274245049.9.azuredatabricks.net/embed/dashboardsv3/01f13907caaf17f9aa3828dcfc8145b1"

@@ -2,7 +2,7 @@
 O&G Operations Hub - Databricks App
 ====================================
 Aplicacao Dash para monitoramento de operacoes de Oil & Gas.
-4 abas: Mapa Operacional, Dashboard Producao, Modelo Preditivo, Genie Assistant.
+3 abas: Dashboard Producao, Modelo Preditivo, Genie Assistant.
 """
 
 import os
@@ -11,7 +11,6 @@ import time
 import logging
 import requests
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 import dash
@@ -44,15 +43,6 @@ CAMPOS = [
     "Peregrino", "Marlim", "Roncador", "Jubarte", "Buzios",
 ]
 
-# Cores por status de poco
-STATUS_COLORS = {
-    "Produzindo": "#2ecc71",
-    "Parado": "#e74c3c",
-    "Manutencao": "#f1c40f",
-    "Abandonado": "#95a5a6",
-    "Completacao": "#3498db",
-}
-
 # ---------------------------------------------------------------------------
 # Funcoes de acesso a dados
 # ---------------------------------------------------------------------------
@@ -71,81 +61,6 @@ def _get_host():
     if host and not host.startswith("http"):
         host = f"https://{host}"
     return host.rstrip("/")
-
-
-def execute_sql(query: str) -> pd.DataFrame:
-    """Executa uma query SQL via Databricks SQL Statement API e retorna DataFrame."""
-    host = _get_host()
-    headers = _get_auth_headers()
-
-    payload = {
-        "warehouse_id": WAREHOUSE_ID,
-        "statement": query,
-        "wait_timeout": "60s",
-        "disposition": "INLINE",
-        "format": "JSON_ARRAY",
-    }
-
-    try:
-        resp = requests.post(
-            f"{host}/api/2.0/sql/statements",
-            headers=headers,
-            json=payload,
-            timeout=120,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-        status = data.get("status", {}).get("state", "")
-        if status == "FAILED":
-            error_msg = data.get("status", {}).get("error", {}).get("message", "Erro desconhecido")
-            logger.error(f"SQL falhou: {error_msg}")
-            return pd.DataFrame()
-
-        # Aguardar se PENDING/RUNNING
-        statement_id = data.get("statement_id")
-        while status in ("PENDING", "RUNNING"):
-            time.sleep(1)
-            resp = requests.get(
-                f"{host}/api/2.0/sql/statements/{statement_id}",
-                headers=headers,
-                timeout=30,
-            )
-            data = resp.json()
-            status = data.get("status", {}).get("state", "")
-
-        if status != "SUCCEEDED":
-            logger.error(f"SQL terminou com status: {status}")
-            return pd.DataFrame()
-
-        manifest = data.get("manifest", {})
-        columns = [col["name"] for col in manifest.get("schema", {}).get("columns", [])]
-        result = data.get("result", {})
-        rows = result.get("data_array", [])
-
-        if not columns or not rows:
-            return pd.DataFrame()
-
-        return pd.DataFrame(rows, columns=columns)
-
-    except Exception as e:
-        logger.error(f"Erro ao executar SQL: {e}")
-        return pd.DataFrame()
-
-
-def load_pocos() -> pd.DataFrame:
-    """Carrega dados de pocos da tabela silver_pocos."""
-    query = f"""
-    SELECT id_poco, codigo_sap, nome_poco, campo, bacia, tipo_poco,
-           metodo_elevacao, profundidade_m, latitude, longitude, status
-    FROM {CATALOGO}.{SCHEMA}.silver_pocos
-    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-    """
-    df = execute_sql(query)
-    if not df.empty:
-        for col in ["latitude", "longitude", "profundidade_m"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-    return df
 
 
 def call_serving_endpoint(features: dict) -> float:
@@ -331,33 +246,55 @@ server = app.server
 # ---------------------------------------------------------------------------
 
 CARD_STYLE = {
-    "backgroundColor": "#1a1a2e",
-    "border": "1px solid #16213e",
-    "borderRadius": "10px",
+    "background": "rgba(26, 26, 46, 0.85)",
+    "border": "1px solid rgba(0, 212, 255, 0.15)",
+    "borderRadius": "14px",
+    "backdropFilter": "blur(10px)",
+    "WebkitBackdropFilter": "blur(10px)",
+    "boxShadow": "0 4px 24px rgba(0, 0, 0, 0.4)",
 }
 
 TAB_STYLE = {
-    "backgroundColor": "#0f0f23",
-    "borderColor": "#16213e",
+    "backgroundColor": "transparent",
+    "borderColor": "transparent",
     "color": "#8892b0",
-    "padding": "12px 24px",
+    "padding": "14px 28px",
     "fontWeight": "500",
+    "fontSize": "14px",
+    "letterSpacing": "0.3px",
+    "borderRadius": "8px 8px 0 0",
 }
 
 TAB_SELECTED_STYLE = {
-    "backgroundColor": "#1a1a2e",
-    "borderColor": "#00d4ff",
+    "backgroundColor": "rgba(0, 212, 255, 0.08)",
+    "borderColor": "transparent",
     "borderTop": "3px solid #00d4ff",
     "color": "#00d4ff",
-    "padding": "12px 24px",
-    "fontWeight": "600",
+    "padding": "14px 28px",
+    "fontWeight": "700",
+    "fontSize": "14px",
+    "letterSpacing": "0.3px",
+    "borderRadius": "8px 8px 0 0",
 }
 
 HEADER_STYLE = {
-    "background": "linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)",
-    "padding": "20px 30px",
-    "borderBottom": "2px solid #00d4ff",
+    "background": "linear-gradient(135deg, #0a0a1a 0%, #12122a 40%, #1a1040 100%)",
+    "padding": "22px 36px",
+    "borderBottom": "1px solid rgba(0, 212, 255, 0.25)",
+    "boxShadow": "0 2px 20px rgba(0, 212, 255, 0.08)",
     "marginBottom": "0px",
+}
+
+ACCENT_CYAN = "#00d4ff"
+ACCENT_PURPLE = "#7c3aed"
+
+GRADIENT_CARD_STYLE = {
+    "background": "linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(124,58,237,0.08) 100%)",
+    "border": "1px solid rgba(0, 212, 255, 0.2)",
+    "borderRadius": "14px",
+    "backdropFilter": "blur(10px)",
+    "WebkitBackdropFilter": "blur(10px)",
+    "boxShadow": "0 4px 24px rgba(0, 0, 0, 0.4)",
 }
 
 
@@ -372,129 +309,90 @@ header = html.Div(
             [
                 dbc.Col(
                     [
-                        html.H2(
+                        html.Div(
                             [
-                                html.I(className="fas fa-oil-well me-3", style={"color": "#00d4ff"}),
-                                "O&G Operations Hub",
+                                html.Span(
+                                    html.I(className="fas fa-oil-well"),
+                                    style={
+                                        "background": "linear-gradient(135deg, #00d4ff, #7c3aed)",
+                                        "WebkitBackgroundClip": "text",
+                                        "WebkitTextFillColor": "transparent",
+                                        "fontSize": "28px",
+                                        "marginRight": "12px",
+                                        "display": "inline-block",
+                                        "verticalAlign": "middle",
+                                    },
+                                ),
+                                html.Span(
+                                    "O&G Operations Hub",
+                                    style={
+                                        "background": "linear-gradient(90deg, #e6f1ff 0%, #00d4ff 60%, #7c3aed 100%)",
+                                        "WebkitBackgroundClip": "text",
+                                        "WebkitTextFillColor": "transparent",
+                                        "fontSize": "26px",
+                                        "fontWeight": "800",
+                                        "letterSpacing": "-0.5px",
+                                        "verticalAlign": "middle",
+                                    },
+                                ),
                             ],
-                            style={"color": "#e6f1ff", "marginBottom": "4px", "fontWeight": "700"},
+                            style={"marginBottom": "6px"},
                         ),
                         html.P(
-                            f"Plataforma Integrada de Monitoramento | {CATALOGO}.{SCHEMA}",
-                            style={"color": "#8892b0", "marginBottom": "0", "fontSize": "14px"},
+                            [
+                                html.Span("Plataforma Integrada de Monitoramento", style={"color": "#8892b0"}),
+                                html.Span(" · ", style={"color": "#334", "margin": "0 6px"}),
+                                html.Span(
+                                    [
+                                        html.I(className="fas fa-bolt me-1", style={"fontSize": "10px"}),
+                                        "Powered by Databricks",
+                                    ],
+                                    style={
+                                        "color": "#00d4ff",
+                                        "backgroundColor": "rgba(0,212,255,0.08)",
+                                        "padding": "2px 8px",
+                                        "borderRadius": "4px",
+                                        "fontSize": "12px",
+                                        "fontWeight": "600",
+                                    },
+                                ),
+                            ],
+                            style={"marginBottom": "0", "fontSize": "13px"},
                         ),
                     ],
                     width=8,
                 ),
                 dbc.Col(
-                    [
-                        html.Div(
-                            [
-                                dbc.Badge(
-                                    [html.I(className="fas fa-database me-1"), "SQL Warehouse"],
-                                    color="success" if WAREHOUSE_ID else "danger",
-                                    className="me-2",
-                                    pill=True,
-                                ),
-                                dbc.Badge(
-                                    [html.I(className="fas fa-brain me-1"), "Model Serving"],
-                                    color="success" if SERVING_ENDPOINT else "danger",
-                                    className="me-2",
-                                    pill=True,
-                                ),
-                                dbc.Badge(
-                                    [html.I(className="fas fa-robot me-1"), "Genie"],
-                                    color="success" if GENIE_SPACE_ID else "danger",
-                                    pill=True,
-                                ),
-                            ],
-                            style={"textAlign": "right", "paddingTop": "8px"},
-                        )
-                    ],
+                    html.Div(
+                        [
+                            dbc.Badge(
+                                [html.I(className="fas fa-database me-1"), "SQL Warehouse"],
+                                color="success" if WAREHOUSE_ID else "danger",
+                                className="me-2 badge-pulse",
+                                pill=True,
+                                style={"fontSize": "11px", "padding": "6px 12px"},
+                            ),
+                            dbc.Badge(
+                                [html.I(className="fas fa-brain me-1"), "Model Serving"],
+                                color="success" if SERVING_ENDPOINT else "danger",
+                                className="me-2 badge-pulse-purple",
+                                pill=True,
+                                style={"fontSize": "11px", "padding": "6px 12px"},
+                            ),
+                            dbc.Badge(
+                                [html.I(className="fas fa-robot me-1"), "Genie"],
+                                color="success" if GENIE_SPACE_ID else "danger",
+                                className="badge-pulse",
+                                pill=True,
+                                style={"fontSize": "11px", "padding": "6px 12px"},
+                            ),
+                        ],
+                        style={"textAlign": "right", "paddingTop": "10px"},
+                    ),
                     width=4,
                 ),
             ],
             align="center",
-        )
-    ],
-)
-
-
-# ---------------------------------------------------------------------------
-# Tab 1: Mapa Operacional
-# ---------------------------------------------------------------------------
-
-tab_mapa = dbc.Container(
-    fluid=True,
-    className="py-3",
-    children=[
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H6(
-                                        [html.I(className="fas fa-filter me-2"), "Filtros"],
-                                        className="text-info mb-3",
-                                    ),
-                                    html.Label("Campo", className="text-light mb-1", style={"fontSize": "13px"}),
-                                    dcc.Dropdown(
-                                        id="mapa-campo-filter",
-                                        options=[{"label": "Todos os Campos", "value": "Todos"}]
-                                        + [{"label": c, "value": c} for c in CAMPOS],
-                                        value="Todos",
-                                        clearable=False,
-                                        style={"backgroundColor": "#16213e", "color": "#000"},
-                                        className="mb-3",
-                                    ),
-                                    html.Hr(style={"borderColor": "#16213e"}),
-                                    html.H6("Legenda", className="text-info mb-2"),
-                                    *[
-                                        html.Div(
-                                            [
-                                                html.Span(
-                                                    "\u25CF ",
-                                                    style={"color": color, "fontSize": "18px"},
-                                                ),
-                                                html.Span(status, style={"color": "#ccd6f6", "fontSize": "13px"}),
-                                            ],
-                                            className="mb-1",
-                                        )
-                                        for status, color in STATUS_COLORS.items()
-                                    ],
-                                    html.Hr(style={"borderColor": "#16213e"}),
-                                    html.Div(id="mapa-stats", className="mt-2"),
-                                ]
-                            ),
-                            style=CARD_STYLE,
-                        )
-                    ],
-                    width=3,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    dcc.Loading(
-                                        dcc.Graph(
-                                            id="mapa-pocos",
-                                            style={"height": "75vh"},
-                                            config={"displayModeBar": True, "scrollZoom": True},
-                                        ),
-                                        type="circle",
-                                        color="#00d4ff",
-                                    )
-                                ]
-                            ),
-                            style=CARD_STYLE,
-                        )
-                    ],
-                    width=9,
-                ),
-            ]
         ),
     ],
 )
@@ -523,44 +421,84 @@ else:
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
-                            [
-                                html.Div(
-                                    [
+                            html.Div(
+                                [
+                                    html.Div(
                                         html.I(
-                                            className="fas fa-chart-line",
-                                            style={"fontSize": "64px", "color": "#00d4ff", "opacity": "0.5"},
+                                            className="fas fa-chart-area",
+                                            style={"fontSize": "48px", "color": "#00d4ff"},
                                         ),
-                                        html.H4(
-                                            "Dashboard AI/BI",
-                                            className="text-light mt-4 mb-3",
-                                        ),
-                                        html.P(
-                                            "O dashboard AI/BI sera exibido aqui quando a URL de embed for configurada.",
-                                            className="text-muted mb-3",
-                                        ),
-                                        html.P(
-                                            [
-                                                "Configure a variavel de ambiente ",
-                                                html.Code("DASHBOARD_EMBED_URL", style={"color": "#00d4ff"}),
-                                                " com a URL do dashboard publicado.",
-                                            ],
-                                            className="text-muted",
-                                            style={"fontSize": "13px"},
-                                        ),
-                                        html.Hr(style={"borderColor": "#16213e", "width": "50%", "margin": "20px auto"}),
-                                        html.P(
-                                            "Para obter a URL: Dashboard > Share > Embed > Copy Embed URL",
-                                            className="text-muted",
-                                            style={"fontSize": "12px"},
-                                        ),
-                                    ],
-                                    style={"textAlign": "center", "padding": "60px 20px"},
-                                )
-                            ]
+                                        style={
+                                            "background": "linear-gradient(135deg, rgba(0,212,255,0.15), rgba(124,58,237,0.15))",
+                                            "borderRadius": "50%",
+                                            "width": "96px",
+                                            "height": "96px",
+                                            "display": "flex",
+                                            "alignItems": "center",
+                                            "justifyContent": "center",
+                                            "margin": "0 auto 24px",
+                                            "border": "1px solid rgba(0,212,255,0.3)",
+                                        },
+                                    ),
+                                    html.H4(
+                                        "Dashboard AI/BI",
+                                        style={"color": "#e6f1ff", "fontWeight": "700", "marginBottom": "6px"},
+                                    ),
+                                    html.P(
+                                        "Embed do Painel Executivo de Producao",
+                                        className="text-muted mb-4",
+                                        style={"fontSize": "14px"},
+                                    ),
+                                    dbc.Alert(
+                                        [
+                                            html.I(className="fas fa-info-circle me-2"),
+                                            "Configure a variavel de ambiente ",
+                                            html.Code(
+                                                "DASHBOARD_EMBED_URL",
+                                                style={
+                                                    "color": "#00d4ff",
+                                                    "backgroundColor": "rgba(0,212,255,0.1)",
+                                                    "padding": "2px 6px",
+                                                    "borderRadius": "4px",
+                                                },
+                                            ),
+                                            " com a URL de embed do dashboard publicado.",
+                                        ],
+                                        color="info",
+                                        style={
+                                            "backgroundColor": "rgba(0,212,255,0.07)",
+                                            "borderColor": "rgba(0,212,255,0.25)",
+                                            "color": "#ccd6f6",
+                                            "fontSize": "13px",
+                                        },
+                                    ),
+                                    html.Hr(style={"borderColor": "rgba(0,212,255,0.1)", "width": "60%", "margin": "20px auto"}),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                [html.I(className="fas fa-share-alt me-1", style={"color": "#7c3aed"}), "Dashboard"],
+                                                style={"color": "#ccd6f6", "fontSize": "13px"},
+                                            ),
+                                            html.Span(" → ", style={"color": "#8892b0", "margin": "0 10px"}),
+                                            html.Span(
+                                                [html.I(className="fas fa-share me-1", style={"color": "#7c3aed"}), "Share"],
+                                                style={"color": "#ccd6f6", "fontSize": "13px"},
+                                            ),
+                                            html.Span(" → ", style={"color": "#8892b0", "margin": "0 10px"}),
+                                            html.Span(
+                                                [html.I(className="fas fa-code me-1", style={"color": "#00d4ff"}), "Embed > Copy URL"],
+                                                style={"color": "#00d4ff", "fontSize": "13px"},
+                                            ),
+                                        ],
+                                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "flexWrap": "wrap", "gap": "4px"},
+                                    ),
+                                ],
+                                style={"textAlign": "center", "padding": "56px 40px"},
+                            )
                         ),
-                        style=CARD_STYLE,
+                        style=GRADIENT_CARD_STYLE,
                     ),
-                    width=8,
+                    width=7,
                     className="mx-auto",
                 ),
             )
@@ -587,8 +525,8 @@ tab_modelo = dbc.Container(
                             dbc.CardBody(
                                 [
                                     html.H5(
-                                        [html.I(className="fas fa-sliders-h me-2"), "Parametros de Entrada"],
-                                        className="text-info mb-4",
+                                        [html.I(className="fas fa-sliders-h me-2", style={"color": "#7c3aed"}), "Parametros de Entrada"],
+                                        style={"color": "#e6f1ff", "fontWeight": "700", "marginBottom": "16px"},
                                     ),
                                     # Campo
                                     html.Label("Campo", className="text-light mb-1", style={"fontSize": "13px"}),
@@ -597,7 +535,7 @@ tab_modelo = dbc.Container(
                                         options=[{"label": c, "value": c} for c in CAMPOS],
                                         value="Frade",
                                         clearable=False,
-                                        style={"backgroundColor": "#16213e", "color": "#000"},
+                                        style={"backgroundColor": "#16213e", "color": "#e6f1ff"},
                                         className="mb-3",
                                     ),
                                     # Semana
@@ -609,6 +547,7 @@ tab_modelo = dbc.Container(
                                         tooltip={"placement": "bottom", "always_visible": True},
                                         className="mb-3",
                                     ),
+                                    html.Hr(style={"borderColor": "rgba(0,212,255,0.1)", "margin": "12px 0"}),
                                     # BSW medio
                                     dbc.Row(
                                         [
@@ -619,6 +558,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-bsw", type="number", value=45.0,
                                                         min=0, max=100, step=0.1,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=6,
@@ -630,6 +570,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-pressao", type="number", value=1500.0,
                                                         min=50, max=5000, step=10,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=6,
@@ -646,6 +587,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-temp", type="number", value=75.0,
                                                         min=30, max=150, step=1,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=6,
@@ -657,6 +599,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-horas", type="number", value=20.0,
                                                         min=0, max=24, step=0.5,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=6,
@@ -664,6 +607,7 @@ tab_modelo = dbc.Container(
                                         ],
                                         className="mb-3",
                                     ),
+                                    html.Hr(style={"borderColor": "rgba(0,212,255,0.1)", "margin": "12px 0"}),
                                     dbc.Row(
                                         [
                                             dbc.Col(
@@ -673,6 +617,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-pocos", type="number", value=50,
                                                         min=1, max=500, step=1,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=4,
@@ -684,6 +629,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-vol-ant", type="number", value=50000.0,
                                                         min=0, step=1000,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=4,
@@ -695,6 +641,7 @@ tab_modelo = dbc.Container(
                                                         id="modelo-vol-media", type="number", value=48000.0,
                                                         min=0, step=1000,
                                                         className="bg-dark text-light",
+                                                        style={"borderColor": "rgba(0,212,255,0.2)"},
                                                     ),
                                                 ],
                                                 width=4,
@@ -709,10 +656,17 @@ tab_modelo = dbc.Container(
                                         size="lg",
                                         className="w-100",
                                         n_clicks=0,
+                                        style={
+                                            "background": "linear-gradient(135deg, #00d4ff, #7c3aed)",
+                                            "border": "none",
+                                            "fontWeight": "700",
+                                            "letterSpacing": "0.5px",
+                                            "boxShadow": "0 4px 15px rgba(0,212,255,0.25)",
+                                        },
                                     ),
                                 ]
                             ),
-                            style=CARD_STYLE,
+                            style=GRADIENT_CARD_STYLE,
                         )
                     ],
                     width=5,
@@ -724,8 +678,8 @@ tab_modelo = dbc.Container(
                             dbc.CardBody(
                                 [
                                     html.H5(
-                                        [html.I(className="fas fa-chart-bar me-2"), "Resultado da Previsao"],
-                                        className="text-info mb-4",
+                                        [html.I(className="fas fa-chart-bar me-2", style={"color": "#00d4ff"}), "Resultado da Previsao"],
+                                        style={"color": "#e6f1ff", "fontWeight": "700", "marginBottom": "16px"},
                                     ),
                                     dcc.Loading(
                                         html.Div(id="modelo-resultado"),
@@ -734,14 +688,14 @@ tab_modelo = dbc.Container(
                                     ),
                                 ]
                             ),
-                            style=CARD_STYLE,
+                            style=GRADIENT_CARD_STYLE,
                         ),
                         dbc.Card(
                             dbc.CardBody(
                                 [
                                     html.H6(
-                                        [html.I(className="fas fa-info-circle me-2"), "Sobre o Modelo"],
-                                        className="text-info mb-3",
+                                        [html.I(className="fas fa-info-circle me-2", style={"color": "#7c3aed"}), "Sobre o Modelo"],
+                                        style={"color": "#ccd6f6", "marginBottom": "12px"},
                                     ),
                                     html.P(
                                         f"Modelo: {CATALOGO}.{SCHEMA}.modelo_producao_decline@champion",
@@ -768,7 +722,7 @@ tab_modelo = dbc.Container(
                                     ),
                                 ]
                             ),
-                            style={**CARD_STYLE, "marginTop": "15px"},
+                            style={**CARD_STYLE, "marginTop": "15px", "border": "1px solid rgba(124,58,237,0.2)"},
                         ),
                     ],
                     width=7,
@@ -804,8 +758,8 @@ tab_genie = dbc.Container(
                             dbc.CardBody(
                                 [
                                     html.H5(
-                                        [html.I(className="fas fa-robot me-2"), "Genie - Assistente de Dados"],
-                                        className="text-info mb-3",
+                                        [html.I(className="fas fa-robot me-2", style={"color": "#7c3aed"}), "Genie — Assistente de Dados"],
+                                        style={"color": "#e6f1ff", "fontWeight": "700", "marginBottom": "14px"},
                                     ),
                                     # Chat history
                                     html.Div(
@@ -814,9 +768,9 @@ tab_genie = dbc.Container(
                                             "height": "55vh",
                                             "overflowY": "auto",
                                             "padding": "15px",
-                                            "backgroundColor": "#0f0f23",
-                                            "borderRadius": "8px",
-                                            "border": "1px solid #16213e",
+                                            "background": "rgba(8,8,24,0.7)",
+                                            "borderRadius": "10px",
+                                            "border": "1px solid rgba(0,212,255,0.1)",
                                             "marginBottom": "15px",
                                         },
                                         children=[
@@ -830,7 +784,8 @@ tab_genie = dbc.Container(
                                                     ),
                                                 ],
                                                 style={
-                                                    "backgroundColor": "#16213e",
+                                                    "background": "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(0,212,255,0.08))",
+                                                    "border": "1px solid rgba(124,58,237,0.25)",
                                                     "padding": "12px 16px",
                                                     "borderRadius": "8px",
                                                     "marginBottom": "10px",
@@ -846,7 +801,7 @@ tab_genie = dbc.Container(
                                                 placeholder="Digite sua pergunta sobre producao, pocos ou manutencao...",
                                                 type="text",
                                                 className="bg-dark text-light",
-                                                style={"borderColor": "#16213e"},
+                                                style={"borderColor": "rgba(0,212,255,0.3)", "backgroundColor": "rgba(8,8,24,0.8)", "color": "#e6f1ff"},
                                                 n_submit=0,
                                             ),
                                             dbc.Button(
@@ -854,12 +809,13 @@ tab_genie = dbc.Container(
                                                 id="genie-send-btn",
                                                 color="info",
                                                 n_clicks=0,
+                                                style={"background": "linear-gradient(135deg, #00d4ff, #7c3aed)", "border": "none"},
                                             ),
                                         ]
                                     ),
                                 ]
                             ),
-                            style=CARD_STYLE,
+                            style=GRADIENT_CARD_STYLE,
                         ),
                     ],
                     width=8,
@@ -871,36 +827,42 @@ tab_genie = dbc.Container(
                             dbc.CardBody(
                                 [
                                     html.H6(
-                                        [html.I(className="fas fa-lightbulb me-2"), "Perguntas Sugeridas"],
-                                        className="text-info mb-3",
+                                        [html.I(className="fas fa-lightbulb me-2", style={"color": "#7c3aed"}), "Perguntas Sugeridas"],
+                                        style={"color": "#ccd6f6", "marginBottom": "12px"},
                                     ),
                                     *[
                                         dbc.Button(
                                             q,
                                             id=f"genie-sample-{i}",
-                                            color="outline-secondary",
+                                            color="outline-info",
                                             size="sm",
                                             className="w-100 mb-2 text-start",
-                                            style={"fontSize": "12px", "whiteSpace": "normal", "textAlign": "left"},
+                                            style={
+                                                "fontSize": "12px",
+                                                "whiteSpace": "normal",
+                                                "textAlign": "left",
+                                                "borderColor": "rgba(0,212,255,0.2)",
+                                                "color": "#8892b0",
+                                            },
                                             n_clicks=0,
                                         )
                                         for i, q in enumerate(SAMPLE_QUESTIONS)
                                     ],
                                 ]
                             ),
-                            style=CARD_STYLE,
+                            style=GRADIENT_CARD_STYLE,
                         ),
                         dbc.Card(
                             dbc.CardBody(
                                 [
                                     html.H6(
-                                        [html.I(className="fas fa-code me-2"), "SQL Gerado"],
-                                        className="text-info mb-3",
+                                        [html.I(className="fas fa-code me-2", style={"color": "#00d4ff"}), "SQL Gerado"],
+                                        style={"color": "#ccd6f6", "marginBottom": "12px"},
                                     ),
                                     html.Pre(
                                         id="genie-sql-display",
                                         style={
-                                            "backgroundColor": "#0f0f23",
+                                            "background": "rgba(8,8,24,0.8)",
                                             "color": "#00d4ff",
                                             "padding": "12px",
                                             "borderRadius": "8px",
@@ -908,13 +870,13 @@ tab_genie = dbc.Container(
                                             "maxHeight": "200px",
                                             "overflowY": "auto",
                                             "whiteSpace": "pre-wrap",
-                                            "border": "1px solid #16213e",
+                                            "border": "1px solid rgba(124,58,237,0.2)",
                                         },
                                         children="-- Nenhuma query executada ainda",
                                     ),
                                 ]
                             ),
-                            style={**CARD_STYLE, "marginTop": "15px"},
+                            style={**CARD_STYLE, "marginTop": "15px", "border": "1px solid rgba(124,58,237,0.25)"},
                         ),
                     ],
                     width=4,
@@ -933,19 +895,13 @@ tab_genie = dbc.Container(
 # ---------------------------------------------------------------------------
 
 app.layout = html.Div(
-    style={"backgroundColor": "#0a0a1a", "minHeight": "100vh"},
+    style={"backgroundColor": "#080818", "minHeight": "100vh"},
     children=[
         header,
         dcc.Tabs(
             id="main-tabs",
-            value="tab-mapa",
+            value="tab-dashboard",
             children=[
-                dcc.Tab(
-                    label="  Mapa Operacional",
-                    value="tab-mapa",
-                    style=TAB_STYLE,
-                    selected_style=TAB_SELECTED_STYLE,
-                ),
                 dcc.Tab(
                     label="  Dashboard Producao",
                     value="tab-dashboard",
@@ -965,11 +921,9 @@ app.layout = html.Div(
                     selected_style=TAB_SELECTED_STYLE,
                 ),
             ],
-            style={"backgroundColor": "#0f0f23"},
+            style={"backgroundColor": "#0a0a1a", "borderBottom": "1px solid rgba(0,212,255,0.1)", "paddingLeft": "12px"},
         ),
         html.Div(id="tab-content"),
-        # Store para cache de dados de pocos
-        dcc.Store(id="pocos-data-store"),
     ],
 )
 
@@ -984,142 +938,13 @@ app.layout = html.Div(
     Input("main-tabs", "value"),
 )
 def render_tab(tab):
-    if tab == "tab-mapa":
-        return tab_mapa
-    elif tab == "tab-dashboard":
+    if tab == "tab-dashboard":
         return tab_dashboard
     elif tab == "tab-modelo":
         return tab_modelo
     elif tab == "tab-genie":
         return tab_genie
-    return html.Div()
-
-
-# -- Callback: Carregar dados de pocos quando tab mapa e selecionada --
-
-@app.callback(
-    Output("pocos-data-store", "data"),
-    Input("main-tabs", "value"),
-    prevent_initial_call=True,
-)
-def load_pocos_data(tab):
-    if tab != "tab-mapa":
-        return no_update
-    df = load_pocos()
-    if df.empty:
-        return []
-    return df.to_dict("records")
-
-
-# -- Callback: Renderizar mapa de pocos --
-
-@app.callback(
-    [Output("mapa-pocos", "figure"), Output("mapa-stats", "children")],
-    [Input("pocos-data-store", "data"), Input("mapa-campo-filter", "value")],
-)
-def update_mapa(data, campo_filter):
-    # Figura vazia padrao
-    empty_fig = go.Figure()
-    empty_fig.update_layout(
-        paper_bgcolor="#1a1a2e",
-        plot_bgcolor="#1a1a2e",
-        font_color="#ccd6f6",
-        mapbox=dict(style="open-street-map", center=dict(lat=-22.5, lon=-40.0), zoom=6),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-
-    if not data:
-        empty_fig.add_annotation(
-            text="Carregando dados dos pocos...<br>Verifique a conexao com o SQL Warehouse.",
-            showarrow=False,
-            font=dict(size=16, color="#8892b0"),
-            xref="paper", yref="paper", x=0.5, y=0.5,
-        )
-        return empty_fig, html.P("Sem dados", className="text-muted")
-
-    df = pd.DataFrame(data)
-
-    # Filtrar por campo
-    if campo_filter and campo_filter != "Todos":
-        df = df[df["campo"] == campo_filter]
-
-    if df.empty:
-        return empty_fig, html.P("Nenhum poco encontrado", className="text-muted")
-
-    # Mapear cores
-    df["color"] = df["status"].map(STATUS_COLORS).fillna("#95a5a6")
-
-    fig = px.scatter_mapbox(
-        df,
-        lat="latitude",
-        lon="longitude",
-        color="status",
-        color_discrete_map=STATUS_COLORS,
-        hover_name="nome_poco",
-        hover_data={
-            "campo": True,
-            "bacia": True,
-            "tipo_poco": True,
-            "metodo_elevacao": True,
-            "profundidade_m": ":.0f",
-            "status": True,
-            "latitude": False,
-            "longitude": False,
-        },
-        zoom=6,
-        center={"lat": -22.5, "lon": -40.0},
-        opacity=0.85,
-        size_max=12,
-    )
-
-    fig.update_traces(marker=dict(size=9))
-
-    fig.update_layout(
-        mapbox_style="open-street-map",
-        paper_bgcolor="#1a1a2e",
-        plot_bgcolor="#1a1a2e",
-        font_color="#ccd6f6",
-        legend=dict(
-            title="Status",
-            bgcolor="rgba(26,26,46,0.9)",
-            bordercolor="#16213e",
-            font=dict(color="#ccd6f6"),
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-
-    # Stats
-    total = len(df)
-    produzindo = len(df[df["status"] == "Produzindo"])
-    parado = len(df[df["status"] == "Parado"])
-    manutencao = len(df[df["status"] == "Manutencao"])
-
-    stats = html.Div(
-        [
-            html.P(
-                [html.Strong(f"{total}", style={"color": "#00d4ff"}), " pocos no mapa"],
-                className="text-light mb-1",
-                style={"fontSize": "13px"},
-            ),
-            html.P(
-                [html.Span("\u25CF ", style={"color": "#2ecc71"}), f"{produzindo} produzindo"],
-                className="text-light mb-1",
-                style={"fontSize": "12px"},
-            ),
-            html.P(
-                [html.Span("\u25CF ", style={"color": "#e74c3c"}), f"{parado} parados"],
-                className="text-light mb-1",
-                style={"fontSize": "12px"},
-            ),
-            html.P(
-                [html.Span("\u25CF ", style={"color": "#f1c40f"}), f"{manutencao} em manutencao"],
-                className="text-light mb-0",
-                style={"fontSize": "12px"},
-            ),
-        ]
-    )
-
-    return fig, stats
+    return tab_dashboard
 
 
 # -- Callback: Modelo Preditivo --
@@ -1196,8 +1021,8 @@ def predict_production(n_clicks, campo, semana, bsw, pressao, temp, horas, pocos
             )
         )
         fig_gauge.update_layout(
-            paper_bgcolor="#1a1a2e",
-            plot_bgcolor="#1a1a2e",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
             font_color="#ccd6f6",
             height=350,
             margin=dict(l=30, r=30, t=60, b=30),
@@ -1216,12 +1041,16 @@ def predict_production(n_clicks, campo, semana, bsw, pressao, temp, horas, pocos
                                         html.H6("Previsao", className="text-muted mb-1", style={"fontSize": "11px"}),
                                         html.H4(
                                             f"{prediction:,.0f} bbl",
-                                            className="text-info mb-0",
+                                            style={"color": "#00d4ff", "marginBottom": "0"},
                                         ),
                                     ],
-                                    style={"padding": "12px"},
+                                    style={"padding": "12px", "textAlign": "center"},
                                 ),
-                                style={**CARD_STYLE, "backgroundColor": "#0f0f23"},
+                                style={
+                                    **CARD_STYLE,
+                                    "background": "linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.05))",
+                                    "border": "1px solid rgba(0,212,255,0.3)",
+                                },
                             ),
                             width=4,
                         ),
@@ -1235,9 +1064,9 @@ def predict_production(n_clicks, campo, semana, bsw, pressao, temp, horas, pocos
                                             className="text-light mb-0",
                                         ),
                                     ],
-                                    style={"padding": "12px"},
+                                    style={"padding": "12px", "textAlign": "center"},
                                 ),
-                                style={**CARD_STYLE, "backgroundColor": "#0f0f23"},
+                                style={**CARD_STYLE},
                             ),
                             width=4,
                         ),
@@ -1254,9 +1083,13 @@ def predict_production(n_clicks, campo, semana, bsw, pressao, temp, horas, pocos
                                             },
                                         ),
                                     ],
-                                    style={"padding": "12px"},
+                                    style={"padding": "12px", "textAlign": "center"},
                                 ),
-                                style={**CARD_STYLE, "backgroundColor": "#0f0f23"},
+                                style={
+                                    **CARD_STYLE,
+                                    "background": "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05))",
+                                    "border": "1px solid rgba(124,58,237,0.3)",
+                                },
                             ),
                             width=4,
                         ),
@@ -1390,9 +1223,10 @@ def _build_chat_elements(chat_history: list) -> list:
                 ),
             ],
             style={
-                "backgroundColor": "#16213e",
+                "background": "linear-gradient(135deg, rgba(124,58,237,0.18), rgba(0,212,255,0.08))",
+                "border": "1px solid rgba(124,58,237,0.25)",
                 "padding": "12px 16px",
-                "borderRadius": "8px",
+                "borderRadius": "10px",
                 "marginBottom": "10px",
             },
         )
@@ -1407,9 +1241,10 @@ def _build_chat_elements(chat_history: list) -> list:
                         html.Span(msg["text"], style={"color": "#ccd6f6"}),
                     ],
                     style={
-                        "backgroundColor": "#1e3a5f",
+                        "background": "linear-gradient(135deg, rgba(0,212,255,0.12), rgba(0,100,180,0.08))",
+                        "border": "1px solid rgba(0,212,255,0.2)",
                         "padding": "12px 16px",
-                        "borderRadius": "8px",
+                        "borderRadius": "10px",
                         "marginBottom": "10px",
                         "marginLeft": "40px",
                     },
@@ -1417,7 +1252,7 @@ def _build_chat_elements(chat_history: list) -> list:
             )
         else:
             children = [
-                html.I(className="fas fa-robot me-2", style={"color": "#00d4ff"}),
+                html.I(className="fas fa-robot me-2", style={"color": "#7c3aed"}),
                 html.Span(msg["text"], style={"color": "#ccd6f6"}),
             ]
             # Mostrar SQL inline se existir
@@ -1432,13 +1267,14 @@ def _build_chat_elements(chat_history: list) -> list:
                             html.Pre(
                                 msg["sql"],
                                 style={
-                                    "backgroundColor": "#0a0a1a",
+                                    "background": "rgba(8,8,24,0.9)",
                                     "color": "#00d4ff",
                                     "padding": "8px",
                                     "borderRadius": "4px",
                                     "fontSize": "11px",
                                     "marginTop": "4px",
                                     "whiteSpace": "pre-wrap",
+                                    "border": "1px solid rgba(124,58,237,0.2)",
                                 },
                             ),
                         ]
@@ -1449,9 +1285,10 @@ def _build_chat_elements(chat_history: list) -> list:
                 html.Div(
                     children,
                     style={
-                        "backgroundColor": "#16213e",
+                        "background": "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(26,26,46,0.85))",
+                        "border": "1px solid rgba(124,58,237,0.2)",
                         "padding": "12px 16px",
-                        "borderRadius": "8px",
+                        "borderRadius": "10px",
                         "marginBottom": "10px",
                         "marginRight": "40px",
                     },

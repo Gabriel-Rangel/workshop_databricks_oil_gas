@@ -7,7 +7,7 @@
         "SELECT\n",
         "  *\n",
         "FROM\n",
-        "  workshop_prio.gabriel_rangel.gold_custos_manutencao"
+        "  workshop_databricks.gabriel_rangel.gold_custos_manutencao"
       ],
       "columns": [
         {
@@ -24,7 +24,7 @@
         "SELECT\n",
         "  *\n",
         "FROM\n",
-        "  workshop_prio.gabriel_rangel.gold_producao_por_campo"
+        "  workshop_databricks.gabriel_rangel.gold_producao_por_campo"
       ]
     },
     {
@@ -34,7 +34,7 @@
         "SELECT\n",
         "  *\n",
         "FROM\n",
-        "  workshop_prio.gabriel_rangel.bronze_pocos\n",
+        "  workshop_databricks.gabriel_rangel.bronze_pocos\n",
         "WHERE\n",
         "  latitude IS NOT NULL\n",
         "  AND longitude IS NOT NULL"
@@ -48,8 +48,8 @@
         "  e.*,\n",
         "  p.bacia\n",
         "FROM\n",
-        "  workshop_prio.gabriel_rangel.gold_eficiencia_operacional e\n",
-        "    JOIN workshop_prio.gabriel_rangel.gold_producao_por_campo p\n",
+        "  workshop_databricks.gabriel_rangel.gold_eficiencia_operacional e\n",
+        "    JOIN workshop_databricks.gabriel_rangel.gold_producao_por_campo p\n",
         "      ON e.campo = p.campo"
       ]
     }
