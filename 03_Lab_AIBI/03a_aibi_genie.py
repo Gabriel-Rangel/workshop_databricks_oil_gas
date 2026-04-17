@@ -57,7 +57,7 @@ print(f"Ambiente: {CATALOGO}.{SCHEMA}")
 # MAGIC Contexto de negocio:
 # MAGIC - A operadora opera campos offshore: Frade, Tubarao Martelo, Polvo, Albacora Leste, Wahoo
 # MAGIC - Bacia de Campos e Santos sao as principais areas de operacao
-# MAGIC - BSW (Basic Sediment & Water) acima de 80% indica poco com problemas
+# MAGIC - BSW (Basic Sediment & Water) acima de 80% indica poco com problemas/alta probabilidade de fim de extração
 # MAGIC - Producao e medida em barris por dia (bbl/dia)
 # MAGIC - Ordens de manutencao vem do SAP PM
 # MAGIC

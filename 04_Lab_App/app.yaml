@@ -1,6 +1,7 @@
 command:
-  - "python"
-  - "app.py"
+  - "bash"
+  - "-c"
+  - "streamlit run app.py --server.port ${DATABRICKS_APP_PORT:-8000} --server.address 0.0.0.0 --server.headless true"
 
 env:
   - name: DATABRICKS_WAREHOUSE_ID
@@ -12,8 +13,5 @@ env:
   - name: GENIE_SPACE_ID
     valueFrom: genie-space
 
-  - name: SCHEMA
-    value: "gabriel_rangel"
-
   - name: DASHBOARD_EMBED_URL
-    value: "https://adb-7405608274245049.9.azuredatabricks.net/embed/dashboardsv3/01f13907caaf17f9aa3828dcfc8145b1"
+    value: ""
